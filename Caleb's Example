@@ -1,0 +1,29 @@
+#An example of code
+import socket
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import hashes
+private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+public_key = private_key.public_key()
+def receive:
+
+#Function to dictate how to handle received messages
+def start_client(client):
+def start_client(server_address): # starts the UDP client. It accepts input, encrypts them, and sends them to the server.
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #creates a UDP socket
+    server_address = ('127.0.0.1', 8080) #Server address using a local address and a commonly used port. HTTP is used as it is not storing data and TCP would have to be used instead.
+    #Please change the above two lines of code if we disagree as a group. UDP may not be a great idea as it uses HTTP.
+    while True:
+        message = input("Ask Message to be entered(type q to quit): ")
+        if message.lower() == 'q':
+            break #Break to exit
+        encrypted = public_key.encrypt(message.encode(),
+padding0AEP(mgf=mgf=padding.MGF1(algorithm=hashes.SHA256(),
+algorithm=hashes.SHA256())))
+        #encode converts string into bytes
+        #padding0AEP(mgf=mgf=padding.MGF1(algorithm=hashes.SHA256(),
+algorithm=hashes.SHA256() generates the mask using the hash which was
+set to SHA256
+        #0AEP is the padding used
+        client.sendto(encrypted, server_address)#Sends encrypted
+message to the server.
+    client.close() #Closes the clients' socket
