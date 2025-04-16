@@ -1,0 +1,70 @@
+import socket
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes, serialization
+
+# Load private key
+with open("private_key.pem", "rb") as f:
+    private_key = serialization.load_pem_private_key(f.read(), password=None)
+
+def start_server():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(('127.0.0.1', 8080))
+    server.listen(1)
+    print("Server listening on 127.0.0.1:8080...")
+
+    conn, addr = server.accept()
+    print(f"Connection from {addr}")
+
+    try:
+        while True:
+            # Receive message length
+            length_bytes = conn.recv(4)
+            if not length_bytes:
+                break
+            message_length = int.from_bytes(length_bytes, 'big')
+
+            # Receive the encrypted message
+            encrypted_message = b''
+            while len(encrypted_message) < message_length:
+                chunk = conn.recv(message_length - len(encrypted_message))
+                if not chunk:
+                    break
+                encrypted_message += chunk
+
+            # Decrypt
+            try:
+                decrypted = private_key.decrypt(
+                    encrypted_message,
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None
+                    )
+                )
+            except Exception as e:
+                print(f"[!] Decryption error: {e}")
+                break
+
+            client_msg = decrypted.decode()
+            print(f"Client: {client_msg}")
+
+            if client_msg.lower() in ['q', 'bye']:
+                print("Client ended the session.")
+                break
+
+            # Send message back to client (plaintext)
+            server_reply = input("Server: ")
+            if server_reply.lower() in ['q', 'bye']:
+                print("Ending session.")
+                break
+
+            # Send plaintext reply (no encryption)
+            conn.sendall(len(server_reply.encode()).to_bytes(4, 'big'))
+            conn.sendall(server_reply.encode())
+
+    finally:
+        conn.close()
+        server.close()
+        print("Connection closed.")
+
+start_server()
